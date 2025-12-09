@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>HF Multi-Model Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
+        #chat { border: 1px solid #ddd; padding: 10px; height: 400px; overflow:auto; background:#fafafa }
+        .msg { margin: 8px 0; padding: 8px; border-radius:6px }
+        .user { background: #d0f0ff; text-align: left }
+        .assistant { background: #f0f0f0; text-align: left }
+        .meta { font-size: 12px; color:#666; margin-top:4px }
+    </style>
+</head>
+<body>
+<h2>Multi-model chat (HuggingFace)</h2>
+
+<div>
+    <label for="model">Model:</label>
+    <select id="model"></select>
+    <button id="refreshModels">Refresh models</button>
+</div>
+
+<div id="chat"></div>
+
+<div style="margin-top:10px">
+    <textarea id="prompt" rows="4" style="width:100%"></textarea><br/>
+    <button id="send">Send</button>
+    Max new tokens: <input id="max_tokens" type="number" value="200" style="width:80px"/>
+</div>
+
+<script>
+    async function fetchModels() {
+      const res = await fetch('/api/models');
+      const data = await res.json();
+      const sel = document.getElementById('model');
+      sel.innerHTML = '';
+      for (const key of Object.keys(data)) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = `${key} — ${data[key].id}`;
+        sel.appendChild(option);
+      }
+    }
+
+    function appendMessage(role, text, meta) {
+      const chat = document.getElementById('chat');
+      const div = document.createElement('div');
+      div.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
+      div.innerHTML = `<div>${text.replace(/\n/g,'<br/>')}</div>`;
+      if (meta) {
+        const m = document.createElement('div');
+        m.className = 'meta';
+        m.textContent = meta;
+        div.appendChild(m);
+      }
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    document.getElementById('refreshModels').addEventListener('click', fetchModels);
+
+    document.getElementById('send').addEventListener('click', async () => {
+      const prompt = document.getElementById('prompt').value.trim();
+      if (!prompt) return;
+      const model_key = document.getElementById('model').value;
+      const max_tokens = parseInt(document.getElementById('max_tokens').value || '200', 10);
+
+      appendMessage('user', `(${model_key}) ${prompt}`);
+
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({model_key, prompt, max_tokens})
+      });
+
+      const json = await res.json();
+      if (json.error) {
+        appendMessage('assistant', 'Ошибка: ' + (json.error || 'unknown'));
+        return;
+      }
+
+      // build meta string
+      let meta = `Model: ${json.model_id} | time: ${json.time_s.toFixed(3)}s | in: ${json.input_tokens} tok | out: ${json.output_tokens} tok | total: ${json.total_tokens} tok`;
+      if (json.estimated_cost_usd !== null && json.estimated_cost_usd !== undefined) {
+        meta += ` | est cost: $${json.estimated_cost_usd.toFixed(6)}`;
+      }
+
+      appendMessage('assistant', json.response_text, meta);
+
+      // optional: clear prompt
+      // document.getElementById('prompt').value = '';
+    });
+
+    window.addEventListener('load', fetchModels);
+</script>
+</body>
+</html>

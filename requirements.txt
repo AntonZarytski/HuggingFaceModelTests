@@ -1,0 +1,5 @@
+flask
+huggingface_hub
+python-dotenv
+# опционально для лучшего подсчёта токенов:
+tiktoken
