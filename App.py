@@ -45,6 +45,7 @@ MODELS = {
         "provider": "novita",
         "task": "chat_completion",
         "api_method": "chat_completions_create",
+        # Информация взята https://novita.ai/pricing
         "input_price_per_mt": 0.28,
         "output_price_per_mt": 0.42,
         "max_tokens": 2000,
@@ -368,8 +369,7 @@ def generate():
                 model=model_id,
                 messages=messages,
                 max_tokens=max_tokens,
-                temperature=0.7,
-                top_p=0.95,
+                temperature=0.2,
                 stream=False
             )
 
@@ -391,8 +391,7 @@ def generate():
                 model=model_id,
                 messages=messages,
                 max_tokens=max_tokens,
-                temperature=0.7,
-                top_p=0.95,
+                temperature=0.2,
                 stop=None
             )
 
@@ -406,8 +405,7 @@ def generate():
                 model=model_id,
                 prompt=prompt,
                 max_new_tokens=max_tokens,
-                temperature=0.7,
-                top_p=0.95,
+                temperature=0.2,
                 stream=False
             )
 
