@@ -1,98 +1,916 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>HF Multi-Model Chat</title>
+    <meta charset="utf-8"/>
+    <title>🤗 Multi-Model AI Chat | HuggingFace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
-        #chat { border: 1px solid #ddd; padding: 10px; height: 400px; overflow:auto; background:#fafafa }
-        .msg { margin: 8px 0; padding: 8px; border-radius:6px }
-        .user { background: #d0f0ff; text-align: left }
-        .assistant { background: #f0f0f0; text-align: left }
-        .meta { font-size: 12px; color:#666; margin-top:4px }
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #5b21b6;
+            --secondary: #10b981;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 16px;
+            gap: 16px;
+            max-width: 100vw;
+            height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-lg);
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar h3 i {
+            color: var(--primary);
+        }
+
+        /* Model Selection */
+        .model-selector {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .model-selector label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-light);
+        }
+
+        .model-select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .model-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        .model-info {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .model-info strong {
+            display: block;
+            margin-bottom: 6px;
+            color: white;
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .free-badge {
+            background: var(--secondary);
+        }
+
+        .controls-section {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .controls-section label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--gray-light);
+        }
+
+        .token-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            margin-top: auto;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Main Chat Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h2 i {
+            color: var(--primary);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            animation: messageAppear 0.3s ease-out;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 4px;
+            color: var(--light);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .message.user .message-header {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message.assistant .message-header {
+            color: var(--gray-light);
+        }
+
+        .message-content {
+            font-size: 15px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .typing {
+            display: inline-block;
+            overflow: hidden;
+            border-right: 2px solid var(--primary);
+            white-space: nowrap;
+            animation: typing 1s steps(40, end), blink-caret 0.75s step-end infinite;
+            max-width: 100%;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary); }
+        }
+
+        .message-meta {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+            font-size: 11px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+
+        .prompt-input {
+            flex: 1;
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            resize: none;
+            min-height: 60px;
+            max-height: 120px;
+            transition: var(--transition);
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+        }
+
+        .send-button {
+            padding: 0 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Loading Animation */
+        .loading-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes pulse {
+            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+            30% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Footer */
+        .footer {
+            padding: 16px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--gray);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 12px;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .message {
+                max-width: 95%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h2 {
+                font-size: 20px;
+            }
+
+            .model-selector, .model-info, .controls-section, .stats-panel {
+                padding: 12px;
+            }
+
+            .chat-container {
+                padding: 12px;
+            }
+
+            .message {
+                padding: 12px 16px;
+            }
+        }
     </style>
 </head>
 <body>
-<h2>Multi-model chat (HuggingFace)</h2>
+<!-- Header -->
+<header class="header">
+    <h2><i class="fas fa-robot"></i> Multi-Model AI Chat</h2>
+</header>
 
-<div>
-    <label for="model">Model:</label>
-    <select id="model"></select>
-    <button id="refreshModels">Refresh models</button>
+<!-- Main Container -->
+<div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h3><i class="fas fa-sliders-h"></i> Настройки модели</h3>
+
+        <div class="model-selector">
+            <label for="model">Выберите модель</label>
+            <select id="model" class="model-select"></select>
+            <button id="refreshModels" class="send-button" style="padding: 12px; width: 100%;">
+                <i class="fas fa-sync-alt"></i> Обновить модели
+            </button>
+        </div>
+
+        <div class="model-info">
+            <strong id="modelName">No model selected</strong>
+            <div id="modelDetails">Select a model to see details</div>
+            <div id="pricingBadge" class="pricing-badge" style="display: none;"></div>
+        </div>
+
+        <div class="controls-section">
+            <label for="max_tokens">Max токенов в ответе</label>
+            <input id="max_tokens" type="number" class="token-input" value="200" min="50" max="4000">
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <span>Всего запросов:</span>
+                <span class="stat-value" id="totalRequests">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Всего токенов:</span>
+                <span class="stat-value" id="totalTokens">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Всего затрачено:</span>
+                <span class="stat-value" id="totalCost">$0.00</span>
+            </div>
+            <div class="stat-item">
+                <span>Среднее время ответа:</span>
+                <span class="stat-value" id="avgTime">0.00s</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="main-content">
+        <!-- Chat Messages Container -->
+        <div class="chat-container" id="chat">
+            <!-- Welcome Message -->
+            <div class="message assistant">
+                <div class="message-header">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Assistant</span>
+                </div>
+                <div class="message-content">
+                    Добро пожаловать в чат с несколькими моделями искусственного интеллекта!
+                    Выберите модель на боковой панели и начните чат. Вы можете сравнивать ответы разных моделей искусственного интеллекта в режиме реального времени.
+                </div>
+                <div class="message-meta">
+                    <div class="meta-item">
+                        <i class="far fa-clock"></i>
+                        <span>Just now</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-bolt"></i>
+                        <span>Ready to chat</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                    <textarea
+                            id="prompt"
+                            class="prompt-input"
+                            placeholder="Type your message here... (Shift+Enter for new line)"
+                            rows="1"
+                    ></textarea>
+                <button id="send" class="send-button">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </div>
+    </main>
 </div>
 
-<div id="chat"></div>
-
-<div style="margin-top:10px">
-    <textarea id="prompt" rows="4" style="width:100%"></textarea><br/>
-    <button id="send">Send</button>
-    Max new tokens: <input id="max_tokens" type="number" value="200" style="width:80px"/>
-</div>
+<!-- Footer -->
+<footer class="footer">
+    <div>
+        <i class="fas fa-code"></i> Powered by HuggingFace Inference API •
+        <i class="fas fa-bolt"></i> Real-time AI model comparison •
+        <span id="connectionStatus"><i class="fas fa-circle" style="color: #10b981;"></i> Connected</span>
+    </div>
+</footer>
 
 <script>
+    let modelsData = {};
+    let totalRequests = 0;
+    let totalTokens = 0;
+    let totalCost = 0;
+    let responseTimes = [];
+    let isGenerating = false;
+
     async function fetchModels() {
-      const res = await fetch('/api/models');
-      const data = await res.json();
-      const sel = document.getElementById('model');
-      sel.innerHTML = '';
-      for (const key of Object.keys(data)) {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = `${key} — ${data[key].id}`;
-        sel.appendChild(option);
-      }
+        try {
+            const sendBtn = document.getElementById('refreshModels');
+            const originalText = sendBtn.innerHTML;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            sendBtn.disabled = true;
+
+            const res = await fetch('/api/models');
+            const data = await res.json();
+            modelsData = data;
+
+            const select = document.getElementById('model');
+            select.innerHTML = '';
+
+            for (const key of Object.keys(data)) {
+                const option = document.createElement('option');
+                option.value = key;
+                const isFree = data[key].is_free || false;
+                const pricing = isFree ? ' (Free)' : ' (Paid)';
+                option.textContent = `${key}${pricing}`;
+                select.appendChild(option);
+            }
+
+            updateModelInfo();
+
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            appendMessage('system', 'Error loading models: ' + error.message);
+        }
     }
 
-    function appendMessage(role, text, meta) {
-      const chat = document.getElementById('chat');
-      const div = document.createElement('div');
-      div.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
-      div.innerHTML = `<div>${text.replace(/\n/g,'<br/>')}</div>`;
-      if (meta) {
-        const m = document.createElement('div');
-        m.className = 'meta';
-        m.textContent = meta;
-        div.appendChild(m);
-      }
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+    function updateModelInfo() {
+        const modelKey = document.getElementById('model').value;
+        const modelName = document.getElementById('modelName');
+        const modelDetails = document.getElementById('modelDetails');
+        const pricingBadge = document.getElementById('pricingBadge');
+
+        if (modelsData[modelKey]) {
+            const model = modelsData[modelKey];
+            modelName.textContent = `${modelKey} Model`;
+            modelDetails.innerHTML = `
+                <div style="margin-bottom: 4px;">${model.id}</div>
+                <small style="color: rgba(255, 255, 255, 0.7);">Provider: ${model.provider || 'HuggingFace'}</small>
+            `;
+
+            if (model.is_free) {
+                pricingBadge.textContent = 'FREE MODEL';
+                pricingBadge.className = 'pricing-badge free-badge';
+                pricingBadge.style.display = 'inline-block';
+            } else if (model.pricing_info) {
+                pricingBadge.textContent = model.pricing_info;
+                pricingBadge.className = 'pricing-badge';
+                pricingBadge.style.display = 'inline-block';
+            } else {
+                pricingBadge.style.display = 'none';
+            }
+        } else {
+            modelName.textContent = 'No model selected';
+            modelDetails.textContent = 'Select a model to see details';
+            pricingBadge.style.display = 'none';
+        }
     }
 
+    function appendMessage(role, text, meta = null) {
+        const chat = document.getElementById('chat');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+
+        let headerContent = '';
+        if (role === 'user') {
+            headerContent = '<i class="fas fa-user"></i><span>You</span>';
+        } else if (role === 'assistant') {
+            const modelName = meta?.model_key || 'Model';
+            headerContent = `<i class="fas fa-robot"></i><span>${modelName}</span>`;
+        } else {
+            headerContent = '<i class="fas fa-info-circle"></i><span>System</span>';
+        }
+
+        const messageId = `msg-${Date.now()}`;
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                ${headerContent}
+            </div>
+            <div class="message-content" id="${messageId}">
+                ${role === 'assistant' && !meta ? '<span class="typing"></span>' : escapeHtml(text)}
+            </div>
+            ${meta ? `
+            <div class="message-meta">
+                <div class="meta-item">
+                    <i class="far fa-clock"></i>
+                    <span>${meta.time_s}s</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>${meta.input_tokens} in</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>${meta.output_tokens} out</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calculator"></i>
+                    <span>${meta.total_tokens} total</span>
+                </div>
+                ${meta.estimated_cost_usd !== null ? `
+                <div class="meta-item">
+                    <i class="fas fa-coins"></i>
+                    <span>$${meta.estimated_cost_usd}</span>
+                </div>
+                ` : ''}
+            </div>
+            ` : ''}
+        `;
+
+        chat.appendChild(messageDiv);
+        chat.scrollTop = chat.scrollHeight;
+
+        // If it's an assistant message without meta (typing), animate typing effect
+        if (role === 'assistant' && !meta) {
+            setTimeout(() => typeText(messageId, text), 100);
+        }
+
+        return messageId;
+    }
+
+    function typeText(elementId, text, speed = 20) {
+        const element = document.getElementById(elementId);
+        element.innerHTML = '';
+        element.classList.add('typing');
+
+        let i = 0;
+        const timer = setInterval(() => {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                const chat = document.getElementById('chat');
+                chat.scrollTop = chat.scrollHeight;
+            } else {
+                element.classList.remove('typing');
+                clearInterval(timer);
+            }
+        }, speed);
+    }
+
+    function showLoading() {
+        const chat = document.getElementById('chat');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-dots';
+        loadingDiv.id = 'loading';
+        loadingDiv.innerHTML = `
+            <span></span>
+            <span></span>
+            <span></span>
+        `;
+        chat.appendChild(loadingDiv);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function hideLoading() {
+        const loading = document.getElementById('loading');
+        if (loading) {
+            loading.remove();
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    function updateStats(time, tokens, cost) {
+        totalRequests++;
+        totalTokens += tokens;
+        totalCost += cost || 0;
+        responseTimes.push(time);
+
+        const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+
+        document.getElementById('totalRequests').textContent = totalRequests;
+        document.getElementById('totalTokens').textContent = totalTokens.toLocaleString();
+        document.getElementById('totalCost').textContent = `$${totalCost.toFixed(6)}`;
+        document.getElementById('avgTime').textContent = `${avgTime.toFixed(2)}s`;
+    }
+
+    // Event Listeners
     document.getElementById('refreshModels').addEventListener('click', fetchModels);
+    document.getElementById('model').addEventListener('change', updateModelInfo);
 
     document.getElementById('send').addEventListener('click', async () => {
-      const prompt = document.getElementById('prompt').value.trim();
-      if (!prompt) return;
-      const model_key = document.getElementById('model').value;
-      const max_tokens = parseInt(document.getElementById('max_tokens').value || '200', 10);
+        if (isGenerating) return;
 
-      appendMessage('user', `(${model_key}) ${prompt}`);
+        const promptInput = document.getElementById('prompt');
+        const prompt = promptInput.value.trim();
 
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({model_key, prompt, max_tokens})
-      });
+        if (!prompt) {
+            promptInput.focus();
+            return;
+        }
 
-      const json = await res.json();
-      if (json.error) {
-        appendMessage('assistant', 'Ошибка: ' + (json.error || 'unknown'));
-        return;
-      }
+        const modelKey = document.getElementById('model').value;
+        const maxTokens = parseInt(document.getElementById('max_tokens').value || '200', 10);
 
-      // build meta string
-      let meta = `Model: ${json.model_id} | time: ${json.time_s.toFixed(3)}s | in: ${json.input_tokens} tok | out: ${json.output_tokens} tok | total: ${json.total_tokens} tok`;
-      if (json.estimated_cost_usd !== null && json.estimated_cost_usd !== undefined) {
-        meta += ` | est cost: $${json.estimated_cost_usd.toFixed(6)}`;
-      }
+        if (!modelKey) {
+            alert('Please select a model first');
+            return;
+        }
 
-      appendMessage('assistant', json.response_text, meta);
+        // Display user message
+        appendMessage('user', prompt);
 
-      // optional: clear prompt
-      // document.getElementById('prompt').value = '';
+        // Clear input
+        promptInput.value = '';
+
+        // Disable send button and show loading
+        const sendBtn = document.getElementById('send');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        isGenerating = true;
+
+        // Show typing indicator
+        const typingId = appendMessage('assistant', 'Thinking...');
+        showLoading();
+
+        try {
+            const startTime = Date.now();
+            const res = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    model_key: modelKey,
+                    prompt: prompt,
+                    max_tokens: maxTokens
+                })
+            });
+
+            const json = await res.json();
+            const endTime = Date.now();
+            const requestTime = (endTime - startTime) / 1000;
+
+            // Remove typing indicator
+            const typingElement = document.querySelector(`#${typingId}`)?.closest('.message');
+            if (typingElement) {
+                typingElement.remove();
+            }
+            hideLoading();
+
+            if (json.error) {
+                appendMessage('system', `Error: ${json.error}${json.details ? ' - ' + json.details : ''}`);
+                return;
+            }
+
+            // Display assistant response with metadata
+            const responseText = json.response_text || 'No response generated';
+            appendMessage('assistant', responseText, {
+                model_key: json.model_key,
+                time_s: json.time_s,
+                input_tokens: json.input_tokens,
+                output_tokens: json.output_tokens,
+                total_tokens: json.total_tokens,
+                estimated_cost_usd: json.estimated_cost_usd
+            });
+
+            // Update statistics
+            updateStats(
+                json.time_s,
+                json.total_tokens,
+                json.estimated_cost_usd || 0
+            );
+
+        } catch (error) {
+            console.error('Error:', error);
+            hideLoading();
+            const typingElement = document.querySelector(`#${typingId}`)?.closest('.message');
+            if (typingElement) {
+                typingElement.remove();
+            }
+            appendMessage('system', `Network error: ${error.message}`);
+        } finally {
+            // Re-enable send button
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+            isGenerating = false;
+            promptInput.focus();
+        }
     });
 
-    window.addEventListener('load', fetchModels);
+    // Handle Enter key in textarea (with Shift+Enter for new line)
+    document.getElementById('prompt').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('send').click();
+        }
+    });
+
+    // Auto-resize textarea
+    document.getElementById('prompt').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Initialize
+    window.addEventListener('load', () => {
+        fetchModels();
+
+        // Add some sample messages for demo
+        setTimeout(() => {
+            if (document.getElementById('chat').children.length === 1) {
+            }
+        }, 1000);
+    });
+
+    // Keep connection status updated
+    setInterval(() => {
+        const status = document.getElementById('connectionStatus');
+        status.innerHTML = '<i class="fas fa-circle" style="color: #10b981;"></i> Connected';
+    }, 30000);
 </script>
 </body>
 </html>
